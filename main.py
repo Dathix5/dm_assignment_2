@@ -211,6 +211,7 @@ def get_user_recommendations(user_id, pivot, sim_df, fallback_list, k=10):
         return fallback_list[:k]
 
 # generate recommendations for every user
+print("Generating recommendations for every user...")
 unique_test_users = test_df['userId'].unique()
 submission_rows = []
 for user in unique_test_users:
@@ -225,5 +226,4 @@ final_submission_df = pd.DataFrame(submission_rows, columns=columns)
 
 # save to csv
 final_submission_df.to_csv('ratings_test_filled.csv', index=False)
-print("Success: 'ratings_test_filled.csv' generated with 10 recommendations per user.")
 display(final_submission_df.head())
