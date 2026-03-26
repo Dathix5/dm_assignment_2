@@ -3,6 +3,10 @@
 #%%
 import pandas as pd
 from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.metrics.pairwise import cosine_similarity
+from scipy.sparse import csr_matrix
+from sklearn.model_selection import train_test_split
+display = print # addition -> display does not work in raw python
 #%% md
 # ## Data Preprocessing
 #%% md
@@ -42,9 +46,6 @@ display(train_data.head())
 #%% md
 # Collaborative Filtering
 #%%
-from sklearn.metrics.pairwise import cosine_similarity
-from scipy.sparse import csr_matrix
-
 def setup_cf(data):
     # create interaction matrix
     pivot_table = data.pivot(index='userId', columns='movieId', values='rating').fillna(0)
@@ -119,8 +120,6 @@ print(recommendations)
 #%% md
 # Evaluation
 #%%
-from sklearn.model_selection import train_test_split
-
 # split the data
 train, test = train_test_split(train_data, test_size=0.2, random_state=42)
 
