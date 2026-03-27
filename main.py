@@ -162,7 +162,7 @@ def evaluate_model(model_func, pivot_table, model_data, name, k=10):
             rmses.append((actual - recs[m])**2)
 
     print(f"--- {name} ---")
-    print(f"RMSE:      {np.sqrt(np.mean(rmses)):.4f}" if rmses else "RMSE: N/A")
+    print(f"RMSE:      {np.sqrt(np.mean(rmses)):.4f}")
     print(f"Precision: {np.mean(precisions):.4f}")
     print(f"Recall:    {np.mean(recalls):.4f}")
     print(f"Novelty:   {np.mean(novelties):.4f}\n")
