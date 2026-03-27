@@ -6,6 +6,8 @@ from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.metrics.pairwise import cosine_similarity
 from scipy.sparse import csr_matrix
 from sklearn.model_selection import train_test_split
+import numpy as np
+from scipy.sparse.linalg import svds
 display = print # addition -> display does not work in raw python
 #%% md
 # ## Data Preprocessing
@@ -79,9 +81,6 @@ print(recommendations)
 #%% md
 # Matrix Factorization
 #%%
-import numpy as np
-from scipy.sparse.linalg import svds
-
 def setup_svd(data, k=50):
     # create interaction matrix
     pivot_table = data.pivot(index='userId', columns='movieId', values='rating').fillna(0)
