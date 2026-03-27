@@ -114,7 +114,7 @@ def setup_svd(data, k=50):
     preds_df = pd.DataFrame(all_user_predicted_ratings, columns=pivot_table.columns, index=pivot_table.index)
     return pivot_table, preds_df
 
-def run_matrix_factorization_cf(target_user, pivot_table, preds_df, count=10):
+def run_matrix_factorization(target_user, pivot_table, preds_df, count=10):
     if target_user not in preds_df.index: return pd.Series(dtype=float)
 
     # get and sort the users predictions
@@ -131,7 +131,7 @@ def run_matrix_factorization_cf(target_user, pivot_table, preds_df, count=10):
 
 # test
 pivot_mf, predictions_df = setup_svd(train_data)
-recommendations = run_matrix_factorization_cf(target_user=1, pivot_table=pivot_mf, preds_df=predictions_df)
+recommendations = run_matrix_factorization(target_user=1, pivot_table=pivot_mf, preds_df=predictions_df)
 print(recommendations)
 #%% md
 # Evaluation
@@ -194,7 +194,7 @@ def evaluate_model(model_func, pivot_table, model_data, name, k=10):
 
 # run evaluation and capture output
 cf_results = evaluate_model(run_user_based_cf, pivot_cf, sim_df, "User-Based CF")
-mf_results = evaluate_model(run_matrix_factorization_cf, pivot_mf, preds_df, "Matrix Factorization")
+mf_results = evaluate_model(run_matrix_factorization, pivot_mf, preds_df, "Matrix Factorization")
 #%% md
 # Algorithm Comparison
 #%%
@@ -236,15 +236,15 @@ print(f"Popularity Fallbacks: {top_10_popular}")
 #%% md
 # Get Recommendations
 #%%
-def get_user_recommendations(user_id, pivot, sim_df, fallback_list, k=10):
+def get_user_recommendations(user_id, pivot, preds_df, fallback_list, k=10):
     """
-    Retrieves 10 movie IDs for a user using User-Based CF.
+    Retrieves 10 movie IDs for a user using Matrix Factorization (SVD).
     Falls back to popularity for cold cases.
     """
-    # check if user exists in our similarity matrix
-    if user_id in sim_df.index:
-        # get CF recommendations
-        recs = run_user_based_cf(user_id, pivot, sim_df, count=k)
+    # check if user exists in our reconstructed matrix
+    if user_id in preds_df.index:
+        # get MF recommendations
+        recs = run_matrix_factorization(user_id, pivot, preds_df, count=k)
         final_list = recs.index.tolist()
 
         # padding (popularity)
@@ -261,7 +261,7 @@ print("Generating recommendations for every user...")
 unique_test_users = test_df['userId'].unique()
 submission_rows = []
 for user in unique_test_users:
-    top_10 = get_user_recommendations(user, pivot_cf, sim_df, top_10_popular, k=10)
+    top_10 = get_user_recommendations(user, pivot_cf, preds_df, top_10_popular, k=10)
     submission_rows.append([user] + top_10)
 #%% md
 # Output Dataframe
