@@ -8,7 +8,8 @@ from scipy.sparse import csr_matrix
 from sklearn.model_selection import train_test_split
 import numpy as np
 from scipy.sparse.linalg import svds
-display = print # addition -> display does not work in raw python
+import matplotlib.pyplot as plt
+display = print
 #%% md
 # ## Data Preprocessing
 #%% md
@@ -43,6 +44,22 @@ df_combined = pd.merge(ratings_train, movies_cleaned, on='movieId', how='left')
 df_combined['rating'] = (df_combined['rating'] * 2).astype(int) # rescale rating
 train_data = df_combined[['userId', 'movieId', 'rating']]
 display(train_data.head())
+#%% md
+# Data Distribution
+#%%
+# count ratings per movie
+movie_counts = df_combined['movieId'].value_counts().values
+
+# plot
+plt.figure(figsize=(10, 5))
+plt.plot(movie_counts)
+plt.title('Movie Rating Distribution')
+plt.xlabel('Movies (sorted by popularity)')
+plt.ylabel('Number of Ratings')
+plt.fill_between(range(len(movie_counts)), movie_counts, color='skyblue', alpha=0.4)
+plt.grid(alpha=0.3)
+plt.savefig('distribution.png')
+plt.show()
 #%% md
 # ## Model Training
 #%% md
@@ -120,7 +137,8 @@ print(recommendations)
 # Evaluation
 #%%
 # split the data
-train, test = train_test_split(train_data, test_size=0.2, random_state=42)
+SEED = 99
+train, test = train_test_split(train_data, test_size=0.2, random_state=SEED)
 
 # setup both models
 pivot_cf, sim_df = setup_cf(train)
@@ -160,15 +178,44 @@ def evaluate_model(model_func, pivot_table, model_data, name, k=10):
             actual = user_test[user_test['movieId'] == m]['rating'].values[0]
             rmses.append((actual - recs[m])**2)
 
-    print(f"--- {name} ---")
-    print(f"RMSE:      {np.sqrt(np.mean(rmses)):.4f}")
-    print(f"Precision: {np.mean(precisions):.4f}")
-    print(f"Recall:    {np.mean(recalls):.4f}")
-    print(f"Novelty:   {np.mean(novelties):.4f}\n")
+    # calculate final values
+    res_rmse = np.sqrt(np.mean(rmses))
+    res_prec = np.mean(precisions)
+    res_rec = np.mean(recalls)
+    res_nov = np.mean(novelties)
 
-# run evaluation
-evaluate_model(run_user_based_cf, pivot_cf, sim_df, "User-Based CF")
-evaluate_model(run_matrix_factorization_cf, pivot_mf, preds_df, "Matrix Factorization")
+    print(f"--- {name} ---")
+    print(f"RMSE:      {res_rmse:.4f}")
+    print(f"Precision: {res_prec:.4f}")
+    print(f"Recall:    {res_rec:.4f}")
+    print(f"Novelty:   {res_nov:.4f}\n")
+
+    return [res_rmse, res_prec, res_rec, res_nov]
+
+# run evaluation and capture output
+cf_results = evaluate_model(run_user_based_cf, pivot_cf, sim_df, "User-Based CF")
+mf_results = evaluate_model(run_matrix_factorization_cf, pivot_mf, preds_df, "Matrix Factorization")
+#%% md
+# Algorithm Comparison
+#%%
+# data
+models = ['CF', 'MF']
+metrics = {
+    'RMSE (lower is better)': [cf_results[0], mf_results[0]],
+    'Precision': [cf_results[1], mf_results[1]],
+    'Recall': [cf_results[2], mf_results[2]],
+    'Novelty': [cf_results[3], mf_results[3]]
+}
+
+# create 4 plots
+fig, axes = plt.subplots(1, 4, figsize=(15, 4))
+for i, (name, values) in enumerate(metrics.items()):
+    ax = axes[i]
+    ax.bar(models, values, color=['blue', 'orange'])
+    ax.set_title(name)
+plt.tight_layout()
+plt.savefig('comparison_results.png')
+plt.show()
 #%% md
 # ## Prediction for Test Users
 #%% md
